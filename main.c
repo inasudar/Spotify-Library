@@ -1,105 +1,80 @@
 #include "spotify.h"
 
-void display_menu() {
-	printf("\n=== SPOTIFY BIBLIOTEKA ===\n");
-	printf("1. Dodaj pjesmu\n");
-	printf("2. Pregledaj sve pjesme\n");
-	printf("3. Pretrazi pjesme\n");
-	printf("4. Obrisi pjesmu\n");
-	printf("5. Uredi pjesmu\n");
-	printf("6. Kreiraj playlistu\n");
-	printf("7. Dodaj pjesmu u playlistu\n");
-	printf("8. Pregledaj playliste\n");
-	printf("0. Izlaz\n");
-	printf("Odabir: ");
+static void display_menu(void) {
+    printf("\n=== SPOTIFY BIBLIOTEKA ===\n");
+    printf("1. Dodaj pjesmu\n");
+    printf("2. Pregledaj sve pjesme\n");
+    printf("3. Pretrazi pjesme\n");
+    printf("4. Obrisi pjesmu\n");
+    printf("5. Uredi pjesmu\n");
+    printf("6. Kreiraj playlistu\n");
+    printf("7. Dodaj pjesmu u playlistu\n");
+    printf("8. Pregledaj playliste\n");
+    printf("9. Sortiraj\n");
+    printf("10. Umetni pjesmu po naslovu\n");
+    printf("0. Izlaz\n");
+    printf("Odabir: ");
 }
 
-int main() {
-	init_library();
-	load_songs_from_file();
+int main(void) {
+    init_library();
+    load_songs_from_file();
 
-	int choice;
+    int choice;
+    do {
+        display_menu();
+        if (scanf("%d", &choice) != 1) {
+            // ocisti neispravan unos
+            int c; while ((c = getchar()) != '\n' && c != EOF) {}
+            puts("Neispravan unos. Pokusaj ponovo.");
+            continue;
+        }
 
-	do {
-		display_menu();
-		scanf("%d", &choice);
+        switch ((Menu)choice) {
+        case MENU_ADD:      add_song(); break;
+        case MENU_LIST:     list_all_songs(); break;
+        case MENU_SEARCH:   search_songs(); break;
+        case MENU_DELETE: {
+            printf("\n--- POPIS PJESAMA ---\n");
+            for (int i = 0; i < num_songs; i++) {
+                char tbuf[8]; format_duration_mmss(songs[i]->duration, tbuf); // unija u akciji
+                printf("%d %s - %s (%s)\n",
+                    songs[i]->id, songs[i]->artist, songs[i]->title, tbuf);
+            }
+            int id;
+            printf("\nUnesite ID pjesme za brisanje: ");
+            if (scanf("%d", &id) == 1) delete_song(id);
+            else puts("Neispravan ID.");
+            break;
+        }
+        case MENU_EDIT: {
+            printf("\n--- POPIS PJESAMA ---\n");
+            for (int i = 0; i < num_songs; i++) {
+                char tbuf[8]; format_duration_mmss(songs[i]->duration, tbuf); // unija u akciji
+                printf("%d %s - %s (%s)\n",
+                    songs[i]->id, songs[i]->artist, songs[i]->title, tbuf);
+            }
+            int id;
+            printf("\nUnesite ID pjesme za uredivanje: ");
+            if (scanf("%d", &id) == 1) edit_song(id);
+            else puts("Neispravan ID.");
+            break;
+        }
+        case MENU_CREATE_PL:  create_playlist(); break;
+        case MENU_ADD_TO_PL:  add_to_playlist(); break;
+        case MENU_VIEW_PL: list_playlists(); break;
+        case MENU_SORT:    sort_songs_menu(); break;
+        case MENU_INSERT:  add_song_insert_sorted_by_title(); break;
 
-		switch (choice) {
-		case 1: add_song(); break;
-		case 2: list_all_songs(); break;
-		case 3: search_songs(); break;
-		case 4: {
-			printf("\n--- POPIS PJESAMA ---\n");
-			for (int i = 0; i < num_songs; i++) {
-				printf("%d %s - %s (%d:%02d)\n",
-					songs[i]->id,
-					songs[i]->artist,
-					songs[i]->title,
-					songs[i]->duration / 60,
-					songs[i]->duration % 60);
-			}
+        case MENU_EXIT:
+            printf("Izlazim...\n"); break;
 
-			int id;
-			printf("\nUnesite ID pjesme za brisanje: ");
-			scanf("%d", &id);
-			delete_song(id);
-			break;
-		}
-		case 5: {
-			printf("\n--- POPIS PJESAMA ---\n");
-			for (int i = 0; i < num_songs; i++) {
-				printf("%d %s - %s (%d:%02d)\n",
-					songs[i]->id,
-					songs[i]->artist,
-					songs[i]->title,
-					songs[i]->duration / 60,
-					songs[i]->duration % 60);
-			}
+        default:
+            printf("Nepoznata opcija!\n");
+        }
 
-			int id;
-			printf("\nUnesite ID pjesme za uredivanje: ");
-			scanf("%d", &id);
-			edit_song(id);
-			break;
-		}
-		case 6: create_playlist(); break;
-		case 7: add_to_playlist(); break;
-		case 8: {
-			printf("\n--- PLAYLISTE ---\n");
-			for (int i = 0; i < num_playlists; i++) {
-				// Pravilno sklanjanje rije?i "pjesma" ovisno o broju
-				char pjesma_str[20];
-				if (playlists[i].num_songs == 1) {
-					strcpy(pjesma_str, "1 pjesma");
-				}
-				else if (playlists[i].num_songs >= 2 && playlists[i].num_songs <= 4) {
-					sprintf(pjesma_str, "%d pjesme", playlists[i].num_songs);
-				}
-				else {
-					sprintf(pjesma_str, "%d pjesama", playlists[i].num_songs);
-				}
+    } while (choice != 0);
 
-				printf("\n%d. %s (%s):\n",
-					i + 1,
-					playlists[i].name,
-					pjesma_str);
-
-				// Ispis svih pjesama u playlisti
-				for (int j = 0; j < playlists[i].num_songs; j++) {
-					printf("   - %s - %s (%d:%02d)\n",
-						playlists[i].songs[j]->title,
-						playlists[i].songs[j]->artist,
-						playlists[i].songs[j]->duration / 60,
-						playlists[i].songs[j]->duration % 60);
-				}
-			}
-			break;
-		}
-		case 0: printf("Izlazim...\n"); break;
-		default: printf("Nepoznata opcija!\n");
-		}
-	} while (choice != 0);
-
-	cleanup_library();
-	return 0;
+    cleanup_library();
+    return 0;
 }
