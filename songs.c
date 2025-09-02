@@ -762,11 +762,11 @@ static void sort_songs_by_year_with_range(int ascending) {
 
 void sort_songs_menu(void) {
     int field = 0;
-    puts("\n--- SORTIRANJE (v3) ---");
+    puts("\n--- SORTIRANJE ---");
     puts("1) Naslov");
     puts("2) Izvodjac");
-    puts("3) Godina (najstarija do najnovije)");
-    puts("4) Trajanje (najkraća do najduže)");
+    puts("3) Godina");
+    puts("4) Trajanje");
     printf("Odaberi polje (1-4): ");
     if (scanf("%d", &field) != 1 || field < 1 || field > 4) { puts("Neispravan odabir."); return; }
 
